@@ -1,4 +1,5 @@
 import { dequal } from "dequal";
+import { klona } from "klona";
 
 export type Board = string[][];
 
@@ -175,6 +176,14 @@ export function isOutBoard({ row, col }: BoardDelta): boolean {
 
 export function isInRiver(delta: BoardDelta): boolean {
   return !!RiverPos.find((pos) => dequal(pos, delta));
+}
+
+export function isInWTrap(delta: BoardDelta): boolean {
+  return !!WhiteTraps.find((pos) => dequal(pos, delta));
+}
+
+export function isInBTrap(delta: BoardDelta): boolean {
+  return !!BlackTraps.find((pos) => dequal(pos, delta));
 }
 
 export function isOwnDen(playerTurn: string, delta: BoardDelta): boolean {
@@ -614,4 +623,32 @@ export function getWinner(board: Board): string {
   }
 
   return "";
+}
+
+export function makeMove(board: Board, deltaFrom: BoardDelta, deltaTo: BoardDelta) {
+  const prevBoard = klona(board)
+  const nextBoard = klona(board)
+
+  const pieceFrom = board[deltaFrom.row][deltaFrom.col];
+  const isRiver = isInRiver(deltaFrom);
+  const isWTrap = isInWTrap(deltaFrom);
+  const isBTrap = isInBTrap(deltaFrom);
+  const pieceReplaceFrom = isBTrap
+    ? PieceName.BTrap
+    : isWTrap
+      ? PieceName.WTrap
+      : isRiver
+        ? PieceName.R
+        : PieceName.L;
+
+  nextBoard[deltaFrom.row][deltaFrom.col] = pieceReplaceFrom;
+  nextBoard[deltaTo.row][deltaTo.col] = pieceFrom;
+
+  const winner = getWinner(nextBoard)
+
+  return {
+    prevBoard,
+    nextBoard,
+    winner
+  }
 }

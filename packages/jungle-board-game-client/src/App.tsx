@@ -15,19 +15,20 @@ const SQUARE_HEIGHT = 80;
 
 const App: React.FC = () => {
   const [openMenu, setOpenMenu] = React.useState(true);
+  const [canMakeMove, setCanMakeMove] = React.useState(true);
   const [selectedSquare, setSelectedSquare] = React.useState<number[]>([]);
 
   const possibleMoves = selectedSquare.length
     ? game.getMoves(selectedSquare[0], selectedSquare[1])
     : [];
-  const isGameEnded = game.gameStatus === GameStatus.ENDED
+  const isGameEnded = game.gameStatus === GameStatus.ENDED;
 
   const onSelectSquare = (row: number, col: number) => () => {
     // move to possible square
     const moveTo = possibleMoves.find((move) => dequal(move, { row, col }));
     if (!!moveTo) {
       const moveFrom = { row: selectedSquare[0], col: selectedSquare[1] };
-      game.move(moveFrom, moveTo);
+      game.move(moveFrom, moveTo, setCanMakeMove);
       return setSelectedSquare([]);
     }
 
@@ -35,7 +36,7 @@ const App: React.FC = () => {
     if (dequal(selectedSquare, [row, col])) return setSelectedSquare([]);
 
     //can only select animal square
-    if (game.canSelect(row, col)) setSelectedSquare([row, col]);
+    if (canMakeMove && game.canSelect(row, col)) setSelectedSquare([row, col]);
   };
 
   const onClickStart = () => {

@@ -1,6 +1,6 @@
 import { dequal } from "dequal";
-import { klona } from "klona";
 import * as gameLogic from "./gameLogic";
+import * as ai from "./ai";
 
 export enum GameStatus {
   READY = "Ready",
@@ -107,35 +107,40 @@ class Game {
     }
   }
 
-  move(deltaFrom: gameLogic.BoardDelta, deltaTo: gameLogic.BoardDelta): void {
+  move(deltaFrom: gameLogic.BoardDelta, deltaTo: gameLogic.BoardDelta, setCanMakeMove?: (canMove: boolean) => void): void {
     if (this.state.board) {
-      this.history.moves.push(klona(this.state.board));
+      const { prevBoard, nextBoard, winner } = gameLogic.makeMove(this.state.board, deltaFrom, deltaTo)
 
-      const pieceFrom = this.state.board[deltaFrom.row][deltaFrom.col];
+      this.history.moves.push(prevBoard)
+      this.state.board = nextBoard
 
-      // const hasChessPiece = !gameLogic.noChessPiece(this.state.board, deltaTo)
-      // const isNotOwnPiece = !gameLogic.isOwnChessPiece(this.state.board, this.playerTurn, deltaTo)
-      // const canBeat = hasChessPiece && isNotOwnPiece
-
-      const isBTrap = this.isBTrap(deltaFrom.row, deltaFrom.col);
-      const isWTrap = this.isWTrap(deltaFrom.row, deltaFrom.col);
-      const isRiver = this.isRiver(deltaFrom.row, deltaFrom.col);
-      const pieceReplaceFrom = isBTrap
-        ? gameLogic.PieceName.BTrap
-        : isWTrap
-          ? gameLogic.PieceName.WTrap
-          : isRiver
-            ? gameLogic.PieceName.R
-            : gameLogic.PieceName.L;
-
-      this.state.board[deltaFrom.row][deltaFrom.col] = pieceReplaceFrom;
-      this.state.board[deltaTo.row][deltaTo.col] = pieceFrom;
-
-      const winner = gameLogic.getWinner(this.state.board);
       if (winner) {
         this.gameStatus = GameStatus.ENDED;
+        return;
       }
+
+      setCanMakeMove && setCanMakeMove(false);
+      this.computerMove(setCanMakeMove);
     }
+  }
+
+  computerMove(setCanMakeMove?: (canMove: boolean) => void): void {
+    setTimeout(() => {
+      if (this.state.board) {
+        const [deltaFrom, deltaTo] = ai.createComputerMove(this.state.board, gameLogic.PlayerSymbol.W)
+        const { prevBoard, nextBoard, winner } = gameLogic.makeMove(this.state.board, deltaFrom, deltaTo)
+
+        this.history.moves.push(prevBoard)
+        this.state.board = nextBoard
+
+        if (winner) {
+          this.gameStatus = GameStatus.ENDED;
+          return;
+        }
+
+        setCanMakeMove && setCanMakeMove(true)
+      }
+    }, 1000);
   }
 
   isRiver(row: number, col: number): boolean {
