@@ -40,6 +40,7 @@ class Game {
     if (this.gameStatus !== GameStatus.PLAYING) return false;
 
     const piece = this.state.board[row][col];
+
     if (
       this.playerTurn === piece.charAt(0) &&
       piece.substring(1) !== gameLogic.Structure.Den &&
@@ -113,9 +114,17 @@ class Game {
   move(
     deltaFrom: gameLogic.BoardDelta,
     deltaTo: gameLogic.BoardDelta,
-    setCanMakeMove?: (canMove: boolean) => void
+    setCanMakeMove?: (canMove: boolean) => void,
+    shouldRotateBoard?: boolean
   ): void {
     if (this.state.board) {
+      if (shouldRotateBoard) {
+        deltaFrom.row = gameLogic.ROWS - deltaFrom.row - 1;
+        deltaFrom.col = gameLogic.COLS - deltaFrom.col - 1;
+        deltaTo.row = gameLogic.ROWS - deltaTo.row - 1;
+        deltaTo.col = gameLogic.COLS - deltaTo.col - 1;
+      }
+
       const { prevBoard, nextBoard, winner } = gameLogic.makeMove(
         this.state.board,
         deltaFrom,
@@ -130,7 +139,7 @@ class Game {
         return;
       }
 
-      setCanMakeMove && setCanMakeMove(false);
+      // setCanMakeMove && setCanMakeMove(false);
       this.isSinglePlay && this.computerMove(setCanMakeMove);
     }
   }

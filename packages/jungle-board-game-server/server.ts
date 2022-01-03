@@ -32,10 +32,10 @@ app.get("/room/:roomId", (req, res) => {
 
       if (players.size === 1) {
         const [[_, value]] = players
-        return res.json({ room: { readyPlayers: room.players.size, opponentName: value.name } })
+        return res.json({ room: { readyPlayers: room.countPlayers(), opponentName: value.name } })
       }
 
-      return res.json({ room: { readyPlayers: room.players.size } })
+      return res.json({ room: { readyPlayers: room.countPlayers() } })
     }
   }
 
@@ -69,9 +69,32 @@ io.on("connection", socket => {
     socket.to(roomId).emit(Event.MOVE, { moveFrom, moveTo })
   })
 
+  // start to play
+  socket.on(Event.PLAY, () => {
+    const { roomId } = socket.data ?? {}
+    const room = roomMap.get(roomId)
+
+    if (room) {
+      if (room.countPlayers() === 2) {
+        socket.to(roomId).emit(Event.PLAY, true)
+      }
+    }
+  })
+
   // a player disconnect
   socket.on("disconnect", () => {
-    console.log("Someone has disconnected")
+    const { roomId } = socket.data ?? {}
+    const room = roomMap.get(roomId)
+    if (room) {
+      // emit to another player that we leave the room
+      socket.to(roomId).emit(Event.PLAYER_DISCONNECT)
+
+      room.leave(socket)
+
+      if (room.countPlayers() === 0) {
+        roomMap.delete(roomId)
+      }
+    }
   })
 })
 

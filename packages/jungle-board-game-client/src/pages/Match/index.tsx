@@ -24,9 +24,10 @@ const SQUARE_HEIGHT = 80;
 
 const Match: React.FC = () => {
   const [openMenu, setOpenMenu] = useState(true);
-  const [canMakeMove, setCanMakeMove] = useState(true);
+  const [canMakeMove, setCanMakeMove] = useState(false);
   const [selectedSquare, setSelectedSquare] = useState<number[]>([]);
   const [socket, setSocket] = useState<Socket | undefined>();
+  const [isHost, setIsHost] = useState(false);
   const navigate = useNavigate();
 
   const [playerName, setPlayerName] = useLocalStorage(PLAYER_NAME, "");
@@ -47,6 +48,7 @@ const Match: React.FC = () => {
       game.move(moveFrom, moveTo, setCanMakeMove);
 
       socket?.emit("move", { roomId, moveFrom, moveTo });
+      setCanMakeMove(false);
 
       return setSelectedSquare([]);
     }
@@ -58,9 +60,11 @@ const Match: React.FC = () => {
     if (canMakeMove && game.canSelect(row, col)) setSelectedSquare([row, col]);
   };
 
-  const onClickStart = () => {
+  const onClickPlay = () => {
+    socket?.emit(Event.PLAY)
     game.startGame("B", false);
     setOpenMenu(false);
+    setCanMakeMove(true);
   };
 
   useEffect(() => {
@@ -78,6 +82,8 @@ const Match: React.FC = () => {
       // get the opponent player's name
       if (room.readyPlayers === 1) {
         setOpponentName(room.opponentName)
+      } else {
+        setIsHost(true)
       }
     }
 
@@ -104,10 +110,26 @@ const Match: React.FC = () => {
       setOpponentName(opponentName);
     });
 
-    // listen to a new move of opponent player
-    socket.on(Event.MOVE, (data) => {
-      console.log("Move", data);
+    // start to play the game, the host move first
+    socket.on(Event.PLAY, (canPlay) => {
+      if (canPlay) {
+        game.startGame("B", false)
+        setCanMakeMove(false);
+        setOpenMenu(false);
+      }
     });
+
+    // listen to a new move of opponent player
+    socket.on(Event.MOVE, ({ moveFrom, moveTo }) => {
+      game.move(moveFrom, moveTo, null, true)
+      setCanMakeMove(true);
+    });
+
+    // listen to opponent disconnection
+    socket.on(Event.PLAYER_DISCONNECT, () => {
+      setOpponentName('')
+      setIsHost(true)
+    })
 
     return () => {
       socket.disconnect();
@@ -162,7 +184,10 @@ const Match: React.FC = () => {
         )}
       </div>
 
-      <div>{playerName}</div>
+      <div>
+        <span>{playerName}</span>
+        {isHost && <button onClick={onClickPlay}>Play</button>}
+      </div>
 
       {/* <Show when={openMenu || isGameEnded}>
         <div className="main-menu">

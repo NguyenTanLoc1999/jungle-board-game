@@ -26,7 +26,18 @@ class Room {
     if (this.players.size >= this.numPlayers) return;
 
     socket.join(this.roomId);
+    socket.data.roomId = this.roomId;
+
     return this.addPlayer(socket, playerName);
+  }
+
+  leave(socket: Socket) {
+    socket.leave(this.roomId);
+    this.players.delete(socket);
+  }
+
+  countPlayers(): number {
+    return this.players.size;
   }
 }
 
