@@ -18,6 +18,7 @@ class Game {
   playerTurn: string;
 
   gameStatus: GameStatus;
+  isSinglePlay: boolean;
 
   history: History = { moves: [] };
 
@@ -25,12 +26,14 @@ class Game {
     this.state.board = gameLogic.getEmptyBoard();
     this.playerTurn = "";
     this.gameStatus = GameStatus.READY;
+    this.isSinglePlay = false;
   }
 
-  startGame(): void {
+  startGame(playerSymbol: string, isSinglePlay: boolean): void {
     this.gameStatus = GameStatus.PLAYING;
     this.state.board = gameLogic.getInitialBoard();
-    this.playerTurn = gameLogic.PlayerSymbol.B;
+    this.playerTurn = playerSymbol;
+    this.isSinglePlay = isSinglePlay;
   }
 
   canSelect(row: number, col: number): boolean {
@@ -107,12 +110,20 @@ class Game {
     }
   }
 
-  move(deltaFrom: gameLogic.BoardDelta, deltaTo: gameLogic.BoardDelta, setCanMakeMove?: (canMove: boolean) => void): void {
+  move(
+    deltaFrom: gameLogic.BoardDelta,
+    deltaTo: gameLogic.BoardDelta,
+    setCanMakeMove?: (canMove: boolean) => void
+  ): void {
     if (this.state.board) {
-      const { prevBoard, nextBoard, winner } = gameLogic.makeMove(this.state.board, deltaFrom, deltaTo)
+      const { prevBoard, nextBoard, winner } = gameLogic.makeMove(
+        this.state.board,
+        deltaFrom,
+        deltaTo
+      );
 
-      this.history.moves.push(prevBoard)
-      this.state.board = nextBoard
+      this.history.moves.push(prevBoard);
+      this.state.board = nextBoard;
 
       if (winner) {
         this.gameStatus = GameStatus.ENDED;
@@ -120,25 +131,32 @@ class Game {
       }
 
       setCanMakeMove && setCanMakeMove(false);
-      this.computerMove(setCanMakeMove);
+      this.isSinglePlay && this.computerMove(setCanMakeMove);
     }
   }
 
   computerMove(setCanMakeMove?: (canMove: boolean) => void): void {
     setTimeout(() => {
       if (this.state.board) {
-        const [deltaFrom, deltaTo] = ai.createComputerMove(this.state.board, gameLogic.PlayerSymbol.W)
-        const { prevBoard, nextBoard, winner } = gameLogic.makeMove(this.state.board, deltaFrom, deltaTo)
+        const [deltaFrom, deltaTo] = ai.createComputerMove(
+          this.state.board,
+          gameLogic.PlayerSymbol.W
+        );
+        const { prevBoard, nextBoard, winner } = gameLogic.makeMove(
+          this.state.board,
+          deltaFrom,
+          deltaTo
+        );
 
-        this.history.moves.push(prevBoard)
-        this.state.board = nextBoard
+        this.history.moves.push(prevBoard);
+        this.state.board = nextBoard;
 
         if (winner) {
           this.gameStatus = GameStatus.ENDED;
           return;
         }
 
-        setCanMakeMove && setCanMakeMove(true)
+        setCanMakeMove && setCanMakeMove(true);
       }
     }, 1000);
   }

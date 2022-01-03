@@ -625,9 +625,13 @@ export function getWinner(board: Board): string {
   return "";
 }
 
-export function makeMove(board: Board, deltaFrom: BoardDelta, deltaTo: BoardDelta) {
-  const prevBoard = klona(board)
-  const nextBoard = klona(board)
+export function makeMove(
+  board: Board,
+  deltaFrom: BoardDelta,
+  deltaTo: BoardDelta
+) {
+  const prevBoard = klona(board);
+  const nextBoard = klona(board);
 
   const pieceFrom = board[deltaFrom.row][deltaFrom.col];
   const isRiver = isInRiver(deltaFrom);
@@ -636,19 +640,19 @@ export function makeMove(board: Board, deltaFrom: BoardDelta, deltaTo: BoardDelt
   const pieceReplaceFrom = isBTrap
     ? PieceName.BTrap
     : isWTrap
-      ? PieceName.WTrap
-      : isRiver
-        ? PieceName.R
-        : PieceName.L;
+    ? PieceName.WTrap
+    : isRiver
+    ? PieceName.R
+    : PieceName.L;
 
   nextBoard[deltaFrom.row][deltaFrom.col] = pieceReplaceFrom;
   nextBoard[deltaTo.row][deltaTo.col] = pieceFrom;
 
-  const winner = getWinner(nextBoard)
+  const winner = getWinner(nextBoard);
 
   return {
     prevBoard,
     nextBoard,
-    winner
-  }
+    winner,
+  };
 }
