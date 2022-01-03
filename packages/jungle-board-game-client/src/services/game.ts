@@ -199,6 +199,11 @@ class Game {
       !this.isBDen(row, col)
     );
   }
+
+  isOpponent(row: number, col: number): boolean {
+    const piece = this.state.board[row][col]
+    return piece.charAt(0) === gameLogic.PlayerSymbol.W;
+  }
 }
 
 const game = new Game();

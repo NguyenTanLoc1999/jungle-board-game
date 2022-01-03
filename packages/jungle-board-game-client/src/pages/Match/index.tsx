@@ -177,7 +177,10 @@ const Match: React.FC = () => {
                 )}
                 onClick={onSelectSquare(row, col)}
               >
-                <span>{game.getPieceKind(game.state.board[row][col])}</span>
+                <span className={clsx(
+                  { animal: !!game.getPieceKind(game.state.board[row][col]) },
+                  { opponent: game.isOpponent(row, col) }
+                )}>{game.getPieceKind(game.state.board[row][col])}</span>
               </div>
             </div>
           ))
